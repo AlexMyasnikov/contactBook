@@ -6,40 +6,40 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type contact struct {
-	id   int
-	name string
+type Contact struct {
+	Id   int
+	Name string
 }
 
-type db struct {
-	contacts []contact
+type Db struct {
+	contacts []Contact
 }
 
-func (db *db) addContact(r *pb.AddRequest) int {
+func (db *Db) AddContact(r *pb.AddRequest) int {
 	var id int
 	if len(db.contacts) > 0 {
-		id = db.contacts[0].id
+		id = db.contacts[0].Id
 		for _, element := range db.contacts {
-			if element.id > id {
-				id = element.id
+			if element.Id > id {
+				id = element.Id
 			}
 		}
 		id += 1
 	} else {
 		id = 1
 	}
-	db.contacts = append(db.contacts, contact{id, r.Name})
+	db.contacts = append(db.contacts, Contact{id, r.Name})
 	return id
 }
 
-func (db *db) getContact(id int) (contact, error) {
-	var cont contact
+func (db *Db) GetContact(r *pb.GetRequest) (Contact, error) {
+	var cont Contact
 	for _, c := range db.contacts {
-		if id == c.id {
+		if int(r.Id) == c.Id {
 			cont = c
 		}
 	}
-	if cont.id == 0 {
+	if cont.Id == 0 {
 		return cont, status.Errorf(codes.NotFound, "cant find this contact")
 	} else {
 		return cont, nil

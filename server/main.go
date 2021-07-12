@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	Db "github.com/ChuvashPeople/contactBook/fakeDB"
 	pb "github.com/ChuvashPeople/contactBook/services"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
@@ -14,10 +15,12 @@ func main() {
 		grpclog.Fatalf("%v", err)
 	}
 
-	opts := []grpc.ServerOption{}
-	grpcServer := grpc.NewServer(opts...)
+	db := Db.Db{}
+	v1API := NewContactBookServer(&db)
+	//opts := []grpc.ServerOption{}
+	grpcServer := grpc.NewServer()
 
-	pb.RegisterContactBookServer(grpcServer, &server{})
+	pb.RegisterContactBookServer(grpcServer, v1API)
 	err = grpcServer.Serve(listener)
 	if err != nil {
 		grpclog.Fatalf("%v", err)
@@ -26,12 +29,27 @@ func main() {
 }
 
 type server struct {
+	db *Db.Db
 }
 
-func (s server) AddContact(ctx context.Context, request *pb.AddRequest) (*pb.AddResponse, error) {
-	panic("implement me")
+func NewContactBookServer(db *Db.Db) pb.ContactBookServer {
+	return &server{db: db}
 }
 
-func (s server) GetContact(ctx context.Context, request *pb.GetRequest) (*pb.GetResponse, error) {
-	panic("implement me")
+func (s *server) AddContact(ctx context.Context, request *pb.AddRequest) (*pb.AddResponse, error) {
+	s.db.AddContact(request)
+	return &pb.AddResponse{
+		Message: "Person " + request.Name + " added",
+	}, nil
+}
+
+func (s *server) GetContact(ctx context.Context, request *pb.GetRequest) (*pb.GetResponse, error) {
+	contact, err := s.db.GetContact(request)
+	if err != nil {
+		grpclog.Fatalf("%v", err)
+	}
+	return &pb.GetResponse{
+		Name: contact.Name,
+		Id:   int64(contact.Id),
+	}, nil
 }
