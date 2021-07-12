@@ -29,20 +29,40 @@ func main() {
 
 	client := pb.NewContactBookClient(conn)
 
-	i, err := strconv.Atoi(args[2])
-	if err != nil {
-		panic(err)
+	request := args[1]
+	switch request {
+	case "add":
+		{
+			name := args[2]
+			id, err := strconv.Atoi(args[3])
+			if err != nil {
+				panic(err)
+			}
+			request := &pb.AddRequest{
+				Name: name, Id: int64(id),
+			}
+			response, err := client.AddContact(context.Background(), request)
+			if err != nil {
+				grpclog.Fatalf("%v", err)
+			}
+			fmt.Println(response.Message)
+
+		}
+	case "get":
+		{
+			id, err := strconv.ParseInt(os.Args[2], 10, 64)
+			if err != nil {
+				panic(err)
+			}
+			request := &pb.GetRequest{Id: id}
+			response, err := client.GetContact(context.Background(), request)
+			if err != nil {
+				grpclog.Fatalf("%v", err)
+			}
+			fmt.Printf("Name of person with ID-%d: %s\n", response.Id, response.Name)
+
+		}
+
 	}
 
-	request := &pb.AddRequest{
-		Name: args[1],
-		Id:   int64(i),
-	}
-
-	response, err := client.AddContact(context.Background(), request)
-	if err != nil {
-		grpclog.Fatalf("%v", err)
-	}
-
-	fmt.Printf(response.Message)
 }
